@@ -6,3 +6,5 @@
 .project
 .settings/
 .env
+backup_*/
+*.py
