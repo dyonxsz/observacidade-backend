@@ -46,6 +46,12 @@ public class AssistenteLlmClient {
     @Value("${assistente.llm.chave:}")
     private String chave;
 
+    @Value("${GEMINI_API_KEY:}")
+    private String geminiChave;
+
+    @Value("${OPENAI_API_KEY:}")
+    private String openaiChave;
+
     @Value("${assistente.llm.modelo:}")
     private String modelo;
 
@@ -60,12 +66,35 @@ public class AssistenteLlmClient {
     }
 
     public boolean disponivel() {
-        return habilitado && chave != null && !chave.isBlank();
+        return habilitado && !chaveAtiva().isBlank();
+    }
+
+    /** Chave efetiva: a configurada no assistente ou a variável do provedor. */
+    private String chaveAtiva() {
+        if (chave != null && !chave.isBlank()) return chave.trim();
+
+        boolean openai = "openai".equals(provedor()) || "compativel".equals(provedor());
+        String daVez = openai ? openaiChave : geminiChave;
+
+        if (daVez != null && !daVez.isBlank()) return daVez.trim();
+
+        // Se só a outra variável estiver definida, usa ela (evita exigir configurar o provedor).
+        String alternativa = openai ? geminiChave : openaiChave;
+        return alternativa == null ? "" : alternativa.trim();
     }
 
     public String provedor() {
-        String valor = (provider == null || provider.isBlank()) ? "gemini" : provider.trim();
-        return valor.toLowerCase();
+        String valor = (provider == null || provider.isBlank()) ? "auto" : provider.trim().toLowerCase();
+
+        if ("auto".equals(valor)) {
+            return temTexto(openaiChave) && !temTexto(geminiChave) ? "openai" : "gemini";
+        }
+
+        return valor;
+    }
+
+    private static boolean temTexto(String valor) {
+        return valor != null && !valor.isBlank();
     }
 
     public Optional<String> responder(String instrucoes, String pergunta) {
@@ -128,7 +157,7 @@ public class AssistenteLlmClient {
                 .uri(URI.create(endereco))
                 .timeout(Duration.ofSeconds(timeoutSegundos))
                 .header("Content-Type", "application/json")
-                .header("x-goog-api-key", chave.trim())
+                .header("x-goog-api-key", chaveAtiva())
                 .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(corpo)))
                 .build();
     }
@@ -165,7 +194,7 @@ public class AssistenteLlmClient {
                 .uri(URI.create(endereco))
                 .timeout(Duration.ofSeconds(timeoutSegundos))
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + chave.trim())
+                .header("Authorization", "Bearer " + chaveAtiva())
                 .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(corpo)))
                 .build();
     }
