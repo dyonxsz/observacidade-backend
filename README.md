@@ -132,7 +132,7 @@ CREATE DATABASE observa_cidade CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 | `UPLOAD_MAX_BYTES` | `5242880` | Tamanho máximo da imagem |
 | `GEMINI_API_KEY` / `OPENAI_API_KEY` | vazio | Habilita o assistente com IA (sem chave ele usa só a base de FAQ) |
 | `ASSISTENTE_LLM_PROVIDER` | `auto` | Provedor da IA (`gemini`, `openai` ou `auto`, que detecta pela chave) |
-| `ASSISTENTE_LLM_MODELO` | `gemini-2.0-flash` / `gpt-4o-mini` | Modelo usado |
+| `ASSISTENTE_LLM_MODELO` | `gemini-3.5-flash-lite` / `gpt-4o-mini` | Modelo usado |
 | `ASSISTENTE_FAQ_PONTUACAO_MINIMA` | `0.18` | Similaridade mínima para responder pela base |
 
 3. Rode:

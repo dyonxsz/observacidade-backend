@@ -134,24 +134,25 @@ public class AssistenteLlmClient {
     // ── Gemini ───────────────────────────────────────────────────────────────
 
     private HttpRequest requisicaoGemini(String instrucoes, String pergunta) throws Exception {
-        String modeloFinal = (modelo == null || modelo.isBlank()) ? "gemini-2.0-flash" : modelo.trim();
+        // A API de Interactions é a recomendada pelo Google em 2026 e é bem mais
+        // rápida que o generateContent para os modelos Gemini 3.x.
+        String modeloFinal = (modelo == null || modelo.isBlank())
+                ? "gemini-3.5-flash-lite"
+                : modelo.trim();
         String endereco = (url == null || url.isBlank())
-                ? "https://generativelanguage.googleapis.com/v1beta/models/" + modeloFinal + ":generateContent"
+                ? "https://generativelanguage.googleapis.com/v1beta/interactions"
                 : url.trim();
 
         ObjectNode corpo = mapper.createObjectNode();
+        corpo.put("model", modeloFinal);
+        corpo.put("input", pergunta);
+        corpo.put("store", false);
+        corpo.put("system_instruction", instrucoes);
 
-        ObjectNode sistema = corpo.putObject("systemInstruction");
-        sistema.putArray("parts").addObject().put("text", instrucoes);
-
-        ArrayNode contents = corpo.putArray("contents");
-        ObjectNode conteudo = contents.addObject();
-        conteudo.put("role", "user");
-        conteudo.putArray("parts").addObject().put("text", pergunta);
-
-        ObjectNode config = corpo.putObject("generationConfig");
+        ObjectNode config = corpo.putObject("generation_config");
+        config.put("thinking_level", "low");
         config.put("temperature", 0.3);
-        config.put("maxOutputTokens", 500);
+        config.put("max_output_tokens", 600);
 
         return HttpRequest.newBuilder()
                 .uri(URI.create(endereco))
@@ -163,12 +164,18 @@ public class AssistenteLlmClient {
     }
 
     private String extrairGemini(JsonNode raiz) {
-        JsonNode partes = raiz.path("candidates").path(0).path("content").path("parts");
-        if (!partes.isArray()) return null;
+        JsonNode passos = raiz.path("steps");
+        if (!passos.isArray()) return null;
 
         StringBuilder texto = new StringBuilder();
-        for (JsonNode parte : partes) {
-            texto.append(parte.path("text").asText(""));
+        for (JsonNode passo : passos) {
+            if (!"model_output".equals(passo.path("type").asText())) continue;
+
+            for (JsonNode parte : passo.path("content")) {
+                if ("text".equals(parte.path("type").asText())) {
+                    texto.append(parte.path("text").asText(""));
+                }
+            }
         }
         return texto.toString();
     }
