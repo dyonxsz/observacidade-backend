@@ -1,15 +1,22 @@
 package br.com.observacidade.controller;
 
-import java.security.Principal;
 import java.util.List;
 
-import org.springframework.http.*;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import br.com.observacidade.dto.*;
+import br.com.observacidade.enums.*;
+import br.com.observacidade.security.UsuarioAutenticado;
 import br.com.observacidade.service.OcorrenciaService;
-import br.com.observacidade.entity.*;
-import br.com.observacidade.repository.NotificacaoRepository;
 import jakarta.validation.Valid;
 
 @RestController
@@ -18,36 +25,72 @@ import jakarta.validation.Valid;
 public class OcorrenciaController {
 
     private final OcorrenciaService service;
-    private final NotificacaoRepository notificacaoRepository;
+    private final UsuarioAutenticado usuarioAutenticado;
 
-    public OcorrenciaController(OcorrenciaService service, NotificacaoRepository notificacaoRepository) {
+    public OcorrenciaController(OcorrenciaService service, UsuarioAutenticado usuarioAutenticado) {
         this.service = service;
-        this.notificacaoRepository = notificacaoRepository;
+        this.usuarioAutenticado = usuarioAutenticado;
     }
 
     @PostMapping
-    public ResponseEntity<OcorrenciaResponseDTO> criar(
-            @Valid @RequestBody OcorrenciaRequestDTO dto,
-            Principal principal) {
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(new OcorrenciaResponseDTO(service.salvar(dto, principal.getName())));
+    public ResponseEntity<OcorrenciaResponseDTO> criar(@Valid @RequestBody OcorrenciaRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(service.criar(dto, usuarioAutenticado.email()));
     }
 
     @GetMapping
-    public ResponseEntity<List<OcorrenciaResponseDTO>> listar() {
-        List<OcorrenciaResponseDTO> resposta = service.listar()
-                .stream()
-                .map(OcorrenciaResponseDTO::new)
-                .toList();
+    public ResponseEntity<PageResponse<OcorrenciaResumoDTO>> listar(
+            @RequestParam(required = false) StatusOcorrencia status,
+            @RequestParam(required = false) Categoria categoria,
+            @RequestParam(required = false) Urgencia urgencia,
+            @RequestParam(required = false) String bairro,
+            @RequestParam(required = false) String busca,
+            @PageableDefault(size = 20, sort = "dataCriacao", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        return ResponseEntity.ok(resposta);
+        return ResponseEntity.ok(service.listar(status, categoria, urgencia, bairro, busca, pageable));
+    }
+
+    @GetMapping("/minhas")
+    public ResponseEntity<PageResponse<OcorrenciaResumoDTO>> minhas(
+            @PageableDefault(size = 20, sort = "dataCriacao", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        return ResponseEntity.ok(service.listarDoUsuario(usuarioAutenticado.email(), pageable));
+    }
+
+    @GetMapping("/minhas/estatisticas")
+    public ResponseEntity<EstatisticasDTO> minhasEstatisticas() {
+        return ResponseEntity.ok(service.estatisticasDoUsuario(usuarioAutenticado.email()));
+    }
+
+    @GetMapping("/estatisticas")
+    public ResponseEntity<EstatisticasDTO> estatisticas() {
+        return ResponseEntity.ok(service.estatisticas());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OcorrenciaResponseDTO> buscar(@PathVariable Long id) {
-        return ResponseEntity.ok(new OcorrenciaResponseDTO(service.buscar(id)));
+    public ResponseEntity<OcorrenciaResponseDTO> buscar(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "false") boolean incluirImagem) {
+
+        return ResponseEntity.ok(service.buscarDetalhe(id, incluirImagem));
+    }
+
+    @GetMapping("/{id}/imagem")
+    public ResponseEntity<byte[]> imagem(@PathVariable Long id) {
+        OcorrenciaService.ImagemArquivo imagem = service.obterImagem(id);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(imagem.contentType()))
+                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=3600")
+                .body(imagem.bytes());
+    }
+
+    @PostMapping(value = "/{id}/imagem", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ImagemResponseDTO> enviarImagem(
+            @PathVariable Long id,
+            @RequestParam("arquivo") MultipartFile arquivo) {
+
+        return ResponseEntity.ok(service.atualizarImagem(id, arquivo, usuarioAutenticado.email()));
     }
 
     @PutMapping("/{id}")
@@ -55,35 +98,21 @@ public class OcorrenciaController {
             @PathVariable Long id,
             @Valid @RequestBody OcorrenciaRequestDTO dto) {
 
-        return ResponseEntity.ok(new OcorrenciaResponseDTO(service.atualizar(id, dto)));
+        return ResponseEntity.ok(service.atualizar(id, dto, usuarioAutenticado.email()));
+    }
+
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<OcorrenciaResponseDTO> atualizarStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody StatusUpdateDTO dto) {
+
+        return ResponseEntity.ok(service.atualizarStatus(id, dto, usuarioAutenticado.email()));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        service.deletar(id);
+        service.deletar(id, usuarioAutenticado.email());
         return ResponseEntity.noContent().build();
     }
-    @PutMapping("/{id}/status")
-    public ResponseEntity<OcorrenciaResponseDTO> atualizarStatus(
-            @PathVariable Long id,
-            @RequestBody StatusUpdateDTO dto) {
-
-        Ocorrencia ocorrencia = service.buscar(id);
-        ocorrencia.setStatus(dto.getStatus());
-
-        Ocorrencia atualizada = service.salvarEntidade(ocorrencia);
-
-        if (atualizada.getUsuario() != null) {
-            Notificacao n = new Notificacao();
-            n.setUsuario(atualizada.getUsuario());
-            n.setOcorrencia(atualizada);
-            n.setTipo(dto.getStatus() != null ? dto.getStatus().name() : "STATUS");
-            n.setTitulo("Status da ocorrência atualizado");
-            n.setMensagem("Sua ocorrência agora está como: " + dto.getStatus());
-            notificacaoRepository.save(n);
-        }
-
-        return ResponseEntity.ok(new OcorrenciaResponseDTO(atualizada));
-    }
-
 }

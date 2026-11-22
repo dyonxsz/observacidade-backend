@@ -1,5 +1,7 @@
 package br.com.observacidade.dto;
 
+import java.time.LocalDateTime;
+
 import br.com.observacidade.entity.Usuario;
 
 public class UsuarioResponseDTO {
@@ -10,6 +12,7 @@ public class UsuarioResponseDTO {
     private String telefone;
     private String nascimento;
     private String cidade;
+    private LocalDateTime dataCriacao;
 
     public UsuarioResponseDTO(Usuario usuario) {
         this.id = usuario.getId();
@@ -19,6 +22,7 @@ public class UsuarioResponseDTO {
         this.telefone = usuario.getTelefone();
         this.nascimento = usuario.getNascimento();
         this.cidade = usuario.getCidade();
+        this.dataCriacao = usuario.getDataCriacao();
     }
 
     public Long getId() { return id; }
@@ -28,4 +32,5 @@ public class UsuarioResponseDTO {
     public String getTelefone() { return telefone; }
     public String getNascimento() { return nascimento; }
     public String getCidade() { return cidade; }
+    public LocalDateTime getDataCriacao() { return dataCriacao; }
 }

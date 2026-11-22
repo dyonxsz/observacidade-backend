@@ -15,7 +15,7 @@ public class Notificacao {
     private String tipo;
     private String titulo;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
     private String mensagem;
 
     private LocalDateTime dataCriacao;
@@ -32,7 +32,12 @@ public class Notificacao {
 
     @PrePersist
     public void prePersist() {
-        dataCriacao = LocalDateTime.now();
+        if (dataCriacao == null) {
+            dataCriacao = LocalDateTime.now();
+        }
+        if (lida == null) {
+            lida = false;
+        }
     }
 
     public Boolean getLida() { return lida; }

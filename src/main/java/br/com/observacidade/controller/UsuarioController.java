@@ -1,61 +1,56 @@
 package br.com.observacidade.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import br.com.observacidade.dto.PageResponse;
 import br.com.observacidade.dto.UsuarioResponseDTO;
-import br.com.observacidade.entity.Usuario;
-import br.com.observacidade.repository.UsuarioRepository;
+import br.com.observacidade.security.UsuarioAutenticado;
+import br.com.observacidade.service.UsuarioService;
 
 @RestController
 @RequestMapping("/usuarios")
 @CrossOrigin("*")
+@PreAuthorize("hasRole('ADMIN')")
 public class UsuarioController {
 
-    private final UsuarioRepository usuarioRepository;
+    private final UsuarioService service;
+    private final UsuarioAutenticado usuarioAutenticado;
 
-    public UsuarioController(UsuarioRepository usuarioRepository) {
-        this.usuarioRepository = usuarioRepository;
+    public UsuarioController(UsuarioService service, UsuarioAutenticado usuarioAutenticado) {
+        this.service = service;
+        this.usuarioAutenticado = usuarioAutenticado;
     }
 
     @GetMapping
-    public ResponseEntity<List<UsuarioResponseDTO>> listar() {
-        List<UsuarioResponseDTO> resposta = usuarioRepository.findAll()
-                .stream()
-                .map(UsuarioResponseDTO::new)
-                .toList();
+    public ResponseEntity<PageResponse<UsuarioResponseDTO>> listar(
+            @PageableDefault(size = 20, sort = "nome", direction = Sort.Direction.ASC) Pageable pageable) {
 
-        return ResponseEntity.ok(resposta);
+        return ResponseEntity.ok(service.listar(pageable));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioResponseDTO> buscar(@PathVariable Long id) {
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-        return ResponseEntity.ok(new UsuarioResponseDTO(usuario));
+        return ResponseEntity.ok(service.buscar(id));
     }
 
     @PutMapping("/{id}/admin")
     public ResponseEntity<UsuarioResponseDTO> tornarAdmin(@PathVariable Long id) {
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        return ResponseEntity.ok(service.tornarAdmin(id));
+    }
 
-        usuario.setRole("ADMIN");
-        usuarioRepository.save(usuario);
-
-        return ResponseEntity.ok(new UsuarioResponseDTO(usuario));
+    @PutMapping("/{id}/user")
+    public ResponseEntity<UsuarioResponseDTO> tornarUsuario(@PathVariable Long id) {
+        return ResponseEntity.ok(service.tornarUsuario(id, usuarioAutenticado.email()));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-        usuarioRepository.delete(usuario);
-
+        service.deletar(id, usuarioAutenticado.email());
         return ResponseEntity.noContent().build();
     }
 }

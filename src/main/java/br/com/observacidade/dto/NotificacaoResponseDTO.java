@@ -29,4 +29,5 @@ public class NotificacaoResponseDTO {
     public String getMensagem() { return mensagem; }
     public LocalDateTime getDataCriacao() { return dataCriacao; }
     public Long getOcorrenciaId() { return ocorrenciaId; }
+    public Boolean getLida() { return lida; }
 }

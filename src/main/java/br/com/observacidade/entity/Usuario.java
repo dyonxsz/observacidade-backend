@@ -1,5 +1,7 @@
 package br.com.observacidade.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -24,6 +26,18 @@ public class Usuario {
     private String nascimento;
     private String cidade;
 
+    private LocalDateTime dataCriacao;
+
+    @PrePersist
+    public void prePersist() {
+        if (dataCriacao == null) {
+            dataCriacao = LocalDateTime.now();
+        }
+        if (role == null || role.isBlank()) {
+            role = "USER";
+        }
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -47,4 +61,7 @@ public class Usuario {
 
     public String getCidade() { return cidade; }
     public void setCidade(String cidade) { this.cidade = cidade; }
+
+    public LocalDateTime getDataCriacao() { return dataCriacao; }
+    public void setDataCriacao(LocalDateTime dataCriacao) { this.dataCriacao = dataCriacao; }
 }

@@ -12,7 +12,7 @@ public class Comentario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
     private String texto;
 
     private LocalDateTime dataCriacao;
@@ -27,7 +27,9 @@ public class Comentario {
 
     @PrePersist
     public void prePersist() {
-        dataCriacao = LocalDateTime.now();
+        if (dataCriacao == null) {
+            dataCriacao = LocalDateTime.now();
+        }
     }
 
     public Long getId() { return id; }

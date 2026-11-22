@@ -12,11 +12,17 @@ public class Suporte {
 
     private String assunto;
 
-    @Column(columnDefinition = "TEXT")
+    @Lob
     private String mensagem;
 
     private String status = "ABERTO";
     private LocalDateTime dataCriacao;
+
+    @Lob
+    private String resposta;
+
+    private LocalDateTime dataResposta;
+    private String respondidoPor;
 
     @ManyToOne
     @JoinColumn(name = "usuario_id")
@@ -24,7 +30,9 @@ public class Suporte {
 
     @PrePersist
     public void prePersist() {
-        dataCriacao = LocalDateTime.now();
+        if (dataCriacao == null) {
+            dataCriacao = LocalDateTime.now();
+        }
         if (status == null) status = "ABERTO";
     }
 
@@ -42,6 +50,15 @@ public class Suporte {
 
     public LocalDateTime getDataCriacao() { return dataCriacao; }
     public void setDataCriacao(LocalDateTime dataCriacao) { this.dataCriacao = dataCriacao; }
+
+    public String getResposta() { return resposta; }
+    public void setResposta(String resposta) { this.resposta = resposta; }
+
+    public LocalDateTime getDataResposta() { return dataResposta; }
+    public void setDataResposta(LocalDateTime dataResposta) { this.dataResposta = dataResposta; }
+
+    public String getRespondidoPor() { return respondidoPor; }
+    public void setRespondidoPor(String respondidoPor) { this.respondidoPor = respondidoPor; }
 
     public Usuario getUsuario() { return usuario; }
     public void setUsuario(Usuario usuario) { this.usuario = usuario; }

@@ -1,0 +1,177 @@
+@baseUrl = http://localhost:8080
+@email = maria@email.com
+@senha = senha123
+@adminEmail = admin@observacidade.com
+@adminSenha = admin123
+
+# Após rodar o login, cole os tokens abaixo.
+@token = COLE_O_TOKEN_AQUI
+@adminToken = COLE_O_TOKEN_ADMIN_AQUI
+
+### Domínios (público)
+GET {{baseUrl}}/dominios
+
+### Cadastro
+POST {{baseUrl}}/auth/cadastro
+Content-Type: application/json
+
+{
+  "nome": "Maria Silva",
+  "email": "{{email}}",
+  "senha": "{{senha}}",
+  "cidade": "São Paulo"
+}
+
+### Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "senha": "{{senha}}"
+}
+
+### Login admin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "senha": "{{adminSenha}}"
+}
+
+### Meu perfil
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+### Atualizar perfil
+PUT {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nome": "Maria Silva Santos",
+  "telefone": "11999999999",
+  "cidade": "São Paulo"
+}
+
+### Alterar senha
+PUT {{baseUrl}}/auth/me/senha
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "senhaAtual": "{{senha}}",
+  "novaSenha": "novaSenha123"
+}
+
+### Criar ocorrência (com imagem base64 opcional)
+POST {{baseUrl}}/ocorrencias
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "categoria": "INFRAESTRUTURA",
+  "descricao": "Buraco grande na rua das Flores",
+  "rua": "Rua das Flores",
+  "bairro": "Centro",
+  "referencia": "Em frente à escola",
+  "latitude": -23.5505,
+  "longitude": -46.6333,
+  "urgencia": "ALTA"
+}
+
+### Minhas ocorrências
+GET {{baseUrl}}/ocorrencias/minhas?page=0&size=20
+Authorization: Bearer {{token}}
+
+### Listar com filtros
+GET {{baseUrl}}/ocorrencias?status=RECEBIDO&categoria=INFRAESTRUTURA&page=0&size=20
+Authorization: Bearer {{token}}
+
+### Detalhe
+GET {{baseUrl}}/ocorrencias/1
+Authorization: Bearer {{token}}
+
+### Imagem da ocorrência
+GET {{baseUrl}}/ocorrencias/1/imagem
+Authorization: Bearer {{token}}
+
+### Enviar imagem (multipart)
+POST {{baseUrl}}/ocorrencias/1/imagem
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="arquivo"; filename="foto.jpg"
+Content-Type: image/jpeg
+
+< ./foto.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Estatísticas
+GET {{baseUrl}}/ocorrencias/estatisticas
+Authorization: Bearer {{token}}
+
+### Alterar status (admin)
+PUT {{baseUrl}}/ocorrencias/1/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "EM_ANDAMENTO",
+  "observacao": "Equipe de manutenção acionada"
+}
+
+### Comentar
+POST {{baseUrl}}/ocorrencias/1/comentarios
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "texto": "O problema continua no local."
+}
+
+### Notificações não lidas
+GET {{baseUrl}}/notificacoes
+Authorization: Bearer {{token}}
+
+### Marcar todas como lidas
+PUT {{baseUrl}}/notificacoes/marcar-lidas
+Authorization: Bearer {{token}}
+
+### Abrir chamado de suporte
+POST {{baseUrl}}/suporte
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "assunto": "Dúvida",
+  "mensagem": "Como acompanho minha ocorrência?"
+}
+
+### Meus chamados
+GET {{baseUrl}}/suporte/meus
+Authorization: Bearer {{token}}
+
+### Listar chamados (admin)
+GET {{baseUrl}}/suporte?status=ABERTO
+Authorization: Bearer {{adminToken}}
+
+### Responder chamado (admin)
+PUT {{baseUrl}}/suporte/1
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "resposta": "Pelo menu Minhas ocorrências.",
+  "status": "RESPONDIDO"
+}
+
+### Listar usuários (admin)
+GET {{baseUrl}}/usuarios?page=0&size=20
+Authorization: Bearer {{adminToken}}
+
+### Promover a admin
+PUT {{baseUrl}}/usuarios/2/admin
+Authorization: Bearer {{adminToken}}

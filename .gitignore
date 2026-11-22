@@ -7,4 +7,10 @@
 .settings/
 .env
 backup_*/
-*.py
+*.pydata/
+*.mv.db
+*.trace.db
+
+# Banco H2 e logs locais
+/data/
+/logs/
