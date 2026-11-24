@@ -2,6 +2,10 @@
 
 API REST para registro e acompanhamento de ocorrências urbanas (buracos, iluminação, saneamento, lixo, sinalização etc.), aproximando cidadãos e prefeitura.
 
+> **Repositórios do projeto**
+> - Backend/API: <https://github.com/dyonxsz/observacidade-backend>
+> - App mobile (Expo/React Native): <https://github.com/ruaandsx/alerta_cidade>
+
 ## Stack
 
 - Java 17 + Spring Boot 3.5
