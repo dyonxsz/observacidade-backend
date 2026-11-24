@@ -1,44 +1,46 @@
 # Pitch — Observa Cidade (23/11)
 
-Roteiro curto para a apresentação: o que falar, em que ordem, e o que mostrar na tela.
+Roteiro da apresentação: o que falar, em que ordem e o que mostrar na tela.
 
 ## 1. Abertura (30 s)
 
-> "Hoje, quando um cidadão vê um buraco na rua, um poste apagado ou lixo acumulado, ele não
-> tem um canal direto com a prefeitura. O Observa Cidade resolve isso: o cidadão registra a
-> ocorrência com foto e localização pelo celular, e o gestor acompanha, atualiza o status e
-> responde pelo mesmo sistema."
+> "Quando aparece um buraco na rua, um poste apagado ou lixo acumulado, o cidadão não tem
+> um canal direto com a prefeitura. Ele liga, posta em rede social ou desiste. O Observa
+> Cidade junta isso num app: o cidadão registra a ocorrência com foto e localização, e o
+> gestor vê, muda o status e responde no mesmo sistema."
 
-- Problema: comunicação fragmentada (telefone, rede social, papel) e falta de retorno ao cidadão.
-- Solução: app mobile + API + painel do administrador + assistente virtual.
-- Público: cidadão e equipe da prefeitura.
+- Problema: o pedido se perde entre telefone, rede social e papel, e o cidadão nunca fica
+  sabendo o que aconteceu.
+- Solução: app do cidadão, API, painel do administrador e um assistente que tira dúvidas
+  sobre o app.
+- Público: quem mora na cidade e quem atende no órgão.
 
 ## 2. Demonstração (3–4 min)
 
-Ordem sugerida (tudo já logado, evite digitar senha na hora):
+Ordem sugerida. Deixe tudo já logado para não digitar senha na hora.
 
-1. **Cidadão — registrar**
-   - Tela inicial → **Nova ocorrência**
-   - Escolher categoria (ex.: Iluminação), escrever descrição
-   - Tirar/escolher foto e confirmar o GPS
-   - Enviar → aparece no feed com a foto
-2. **Cidadão — acompanhar**
-   - Abrir a ocorrência → mostrar status, histórico e comentários
-   - Mostrar que só o dono vê as opções de **editar/excluir**
+1. **Cidadão: registrar**
+   - Tela inicial → Nova ocorrência
+   - Escolher a categoria (por exemplo, Iluminação) e escrever a descrição
+   - Tirar ou escolher a foto e confirmar o GPS
+   - Enviar; a ocorrência aparece no feed com a foto
+2. **Cidadão: acompanhar**
+   - Abrir a ocorrência e mostrar status, histórico e comentários
+   - Mostrar que as opções de editar e excluir só aparecem para o dono
 3. **Administrador**
-   - Login como admin → painel com estatísticas
-   - Abrir a ocorrência recém-criada → mudar status para **Em andamento**
+   - Entrar como admin e abrir o painel com as estatísticas
+   - Abrir a ocorrência que acabou de ser criada e mudar o status para Em andamento
    - Responder por comentário
 4. **Notificação**
-   - Voltar ao cidadão → sino com aviso da mudança de status
-5. **Assistente (o diferencial novo)**
-   - Tocar no ícone 💬 no topo
-   - Perguntar: *"Como registro uma ocorrência com foto?"*
-   - Mostrar a resposta e o selo **Base de conhecimento**
-   - Perguntar algo fora da base (*"qual a capital da Austrália?"*) → ele assume que não sabe
-     e indica o suporte
+   - Voltar para o cidadão e mostrar o sino com o aviso da mudança
+5. **Assistente**
+   - Tocar no ícone de chat no topo
+   - Perguntar: "Como registro uma ocorrência com foto?"
+   - Mostrar a resposta e o selo "Base de conhecimento"
+   - Perguntar algo fora da base ("qual é a capital da Austrália?") e mostrar que ele
+     assume que não sabe e indica o suporte
 6. **Swagger** (se sobrar tempo)
-   - `http://localhost:8080/swagger-ui.html` — API documentada e testável
+   - `http://localhost:8080/swagger-ui.html`, com a API documentada e testável
 
 ## 3. Arquitetura (1 min)
 
@@ -56,74 +58,76 @@ API Spring Boot 3.5 (Java 17)
 MySQL 8 (produção) ou H2 (dev)
 ```
 
-- O app descobre sozinho o endereço da API (IP local do Expo, endereço embutido ou túnel).
-- Swagger/OpenAPI para demonstrar os endpoints.
-- Testes automatizados: integração (16) + roteiro E2E (29) + assistente (14).
+- O app descobre o endereço da API sozinho: IP local do Expo, endereço embutido ou túnel.
+- Swagger/OpenAPI para mostrar os endpoints.
+- Testes: integração (16), roteiro E2E (29) e assistente (14).
 
 ## 4. Agente de IA (1–2 min)
 
-- **Base curada**: 20 perguntas frequentes sobre o app (foto, GPS, status, permissões,
-  suporte, conta, privacidade).
-- **Busca**: normalização de acentos/plural + TF-IDF e similaridade de cosseno, em Java puro.
-  Não depende de serviço externo nem de banco vetorial.
-- **LLM opcional**: com chave Gemini/OpenAI, os trechos encontrados viram contexto e o modelo
-  redige a resposta (RAG). Sem chave, a base responde sozinha — **fallback automático**.
-- **Aprendizado**: toda pergunta é registrada com origem (`LLM`, `FAQ`, `SEM_RESPOSTA`) e
-  pontuação; o admin vê as perguntas sem resposta para melhorar a base.
-- **Segurança**: não pede senha nem dados pessoais; instruções proíbem inventar prazos,
-  telefones e políticas.
+- A base tem 20 perguntas sobre o app: foto, GPS, status, permissões, suporte, conta e
+  privacidade. Quem mantém é a gente, no `FaqInitializer`.
+- A busca normaliza acento e plural, e compara com TF-IDF e cosseno, tudo em Java. Não
+  chama serviço de fora nem precisa de banco vetorial.
+- Com a chave do Gemini ou da OpenAI, os trechos encontrados viram contexto e o modelo
+  escreve a resposta. Sem chave, a base responde sozinha.
+- Toda pergunta fica registrada com a origem (LLM, FAQ ou sem resposta) e a pontuação. O
+  admin vê o que ficou sem resposta e usa isso para melhorar a base.
+- O assistente não pede senha nem dado pessoal. As instruções dizem para não inventar
+  prazo, telefone ou política.
 
-Frase para o professor:
+Para dizer ao professor:
 
-> "O agente não é um chat genérico: ele é ancorado numa base de conhecimento do domínio e
-> funciona mesmo sem internet/API de IA. A IA é uma camada de redação, não uma dependência."
+> "O agente responde a partir da base do projeto e continua funcionando se a API de IA
+> cair ou se a chave não estiver configurada. A IA escreve a resposta; o conteúdo vem do
+> FAQ."
 
 ## 5. Segurança e privacidade (30 s)
 
-- Senhas com BCrypt; autenticação stateless por JWT.
-- Cidadão só edita/exclui as **próprias** ocorrências.
-- Rotas de administração exigem `ROLE_ADMIN`.
-- Fotos exigem token para serem abertas.
-- Credenciais de admin não aparecem na tela de login.
+- Senhas com BCrypt e autenticação por JWT, sem sessão no servidor.
+- O cidadão só edita e exclui as próprias ocorrências.
+- As rotas de administração exigem `ROLE_ADMIN`.
+- As fotos precisam de token para abrir.
+- O login não mostra as credenciais do admin na tela.
 
-## 6. Diferenciais (30 s)
+## 6. O que ele tem de diferente (30 s)
 
-- Funciona ponta a ponta: app, API, banco, painel e assistente.
-- Roda sem instalar banco (perfil `dev` com H2) e também com MySQL/Docker.
-- Acesso de qualquer lugar por túnel (Cloudflare/Expo), sem DNS próprio.
-- Assistente híbrido (FAQ + IA) com fallback e métricas.
-- Documentação e testes no repositório.
+- Funciona de ponta a ponta: app, API, banco, painel e assistente.
+- Roda sem instalar banco (perfil `dev` com H2) e também com MySQL no Docker.
+- Dá para acessar de qualquer lugar por túnel (Cloudflare ou Expo), sem DNS próprio.
+- O assistente usa FAQ e IA, com fallback e métricas.
+- Documentação e testes ficam no repositório.
 
-## 7. Encerramento e roadmap (30 s)
+## 7. Encerramento e próximos passos (30 s)
 
-> "O próximo passo é integrar com a secretaria responsável (roteamento por categoria), autenticar
-> com a conta gov.br e usar as métricas do assistente para ampliar a base de conhecimento."
+> "O próximo passo é mandar cada ocorrência para a secretaria responsável pela categoria,
+> entrar com a conta gov.br e usar as perguntas sem resposta para crescer a base."
 
-- Integração com sistemas da prefeitura.
-- Notificações push nativas.
-- Mapa com agrupamento de ocorrências por bairro.
-- Painel web público de transparência.
+- Integração com os sistemas da prefeitura.
+- Notificação push nativa.
+- Mapa com as ocorrências agrupadas por bairro.
+- Painel público de transparência.
 
 ## Perguntas prováveis
 
 **"Por que FAQ e não banco vetorial?"**
-> Para ~20 perguntas do domínio, TF-IDF/cosseno resolve com precisão e custo zero. A arquitetura
-> está isolada em `MotorBuscaFaq`; trocar por embeddings é substituir essa classe, sem mexer no
-> restante.
+> São 20 perguntas de um domínio fechado. TF-IDF com cosseno acerta bem e não custa nada.
+> Deixei a busca isolada em `MotorBuscaFaq`; se um dia precisar de embeddings, troco essa
+> classe e o resto continua igual.
 
 **"E se a IA errar?"**
-> Ela recebe instruções para responder só com o contexto, sem inventar prazos ou telefones.
-> Se não houver contexto suficiente, o próprio serviço devolve a mensagem de "não encontrado" e
-> orienta o suporte. Além disso, a resposta da base continua disponível como fallback.
+> Ela recebe só o contexto do FAQ, e as instruções dizem para não inventar prazo ou
+> telefone. Quando o contexto não basta, o próprio serviço devolve "não encontrado" e
+> aponta o suporte. A resposta da base fica de reserva.
 
 **"O que acontece se a internet cair?"**
-> O assistente cai para a base local (se a IA estiver configurada) e o app avisa quando não
-> consegue falar com o servidor. As ocorrências exigem conexão, como qualquer app cliente-servidor.
+> Se a IA estiver configurada, o assistente volta para a base local. O app avisa quando
+> não alcança o servidor. As ocorrências precisam de conexão, como qualquer app
+> cliente-servidor.
 
 **"Como o app acha o servidor?"**
-> Ele testa em paralelo o IP do Expo, o endereço embutido e o túnel público, e usa o primeiro que
-> responder. Também é possível informar manualmente em **login → Servidor**.
+> Ele testa ao mesmo tempo o IP do Expo, o endereço embutido e o túnel, e fica com o
+> primeiro que responder. Também dá para informar na mão em login → Servidor.
 
 **"Isso está no GitHub?"**
-> Sim: backend em `dyonxsz/observacidade-backend` e app em `ruaandsx/alerta_cidade`, com README,
-> Swagger e instruções de execução.
+> Sim. O backend fica em `dyonxsz/observacidade-backend` e o app em
+> `ruaandsx/alerta_cidade`, com README, Swagger e o passo a passo para rodar.
