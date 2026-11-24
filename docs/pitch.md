@@ -1,4 +1,4 @@
-# Pitch — Observa Cidade (23/11)
+# Pitch — Observa Cidade (25/11)
 
 Roteiro da apresentação: o que falar, em que ordem e o que mostrar na tela.
 
